@@ -10,19 +10,32 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/zakisk/docker-clone/utils"
+	"github.com/docker/docker/api/types/filters"
 )
 
 var (
 	all     bool
 	digests bool
-	filters []string
+	filter stringSlice
 	noTrunc bool
 	quiet   bool
 )
 
+type stringSlice []string
+
+func (s *stringSlice) String() string {
+	return strings.Join(*s, ", ")
+}
+
+func (s *stringSlice) Set(value string) error {
+	*s = append(*s, value)
+	return nil
+}
+
 func main() {
 	flag.BoolVar(&all, "all", false, "Show all images (default hides intermediate images)")
 	flag.BoolVar(&digests, "digests", false, "Show digests")
+	flag.Var(&filter, "filter", "Filter output based on conditions provided")
 
 	flag.Parse()
 
@@ -31,11 +44,20 @@ func main() {
 		log.Fatalf("Unabel to create docker client, please make sure that docker is installed\n%s", err.Error())
 		os.Exit(1)
 	}
+	options := types.ImageListOptions{All: all}
+	filterArgs := filters.NewArgs()
+	for _, filt := range filter {
+		key, value, err := utils.FormatFilter(filt)
+		if err != nil {
+			log.Fatal(err)
+		}
+		filterArgs.Add(key, value)
+	}
+	options.Filters = filterArgs
 
-	images, err := cli.ImageList(context.Background(), types.ImageListOptions{All: all})
+	images, err := cli.ImageList(context.Background(), options)
 	if err != nil {
 		log.Fatal("Unabel to get images, please make sure that docker daemon is up and running")
-		os.Exit(1)
 	}
 
 	rows := [][]string{}
