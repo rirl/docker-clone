@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"strings"
@@ -11,14 +12,26 @@ import (
 	"github.com/zakisk/docker-clone/utils"
 )
 
+var (
+	all bool
+	digests bool
+	filters []string
+	noTrunc bool
+	quiet bool
+)
+
 func main() {
+	flag.BoolVar(&all, "all", false, "Show all images (default hides intermediate images)")
+
+	flag.Parse()
+
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		log.Fatalf("Unabel to create docker client, please make sure that docker is installed\n%s", err.Error())
 		os.Exit(1)
 	}
 
-	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
+	images, err := cli.ImageList(context.Background(), types.ImageListOptions{All: all})
 	if err != nil {
 		log.Fatal("Unabel to get images, please make sure that docker daemon is up and running")
 		os.Exit(1)
