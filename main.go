@@ -36,6 +36,8 @@ func main() {
 	flag.BoolVar(&all, "all", false, "Show all images (default hides intermediate images)")
 	flag.BoolVar(&digests, "digests", false, "Show digests")
 	flag.Var(&filter, "filter", "Filter output based on conditions provided")
+	flag.BoolVar(&noTrunc, "no-trunc", false, "Don't truncate output")
+	flag.BoolVar(&quiet, "quiet", false, "Only show image IDs")
 
 	flag.Parse()
 
@@ -73,7 +75,16 @@ func main() {
 		}
 		duration := utils.HumanDuration(image.Created)
 		size := utils.HumanSize(image.Size)
-		rows = append(rows, []string{repository, tag, image.ID[7:19], duration, size})
+		imageId := image.ID[7:19]
+		if noTrunc {
+			imageId = image.ID
+		}
+
+		if quiet {
+			rows = append(rows, []string{imageId})
+			continue
+		}
+		rows = append(rows, []string{repository, tag, imageId, duration, size})
 
 		if digests {
 			digest := "<none>"
@@ -91,6 +102,11 @@ func main() {
 	if digests {
 		header = append(header[:3], header[2:]...)
 		header[2] = "Digests"
+	}
+	
+	if quiet {
+		// no need of header
+		header = []string{}
 	}
 	utils.WriteToTable(header, rows)
 }
