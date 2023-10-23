@@ -103,7 +103,7 @@ func main() {
 		header = append(header[:3], header[2:]...)
 		header[2] = "Digests"
 	}
-	
+
 	if quiet {
 		// no need of header
 		header = []string{}
