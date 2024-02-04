@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+### Bare VsCode LifeCycle Method > Experimental
+### Returns success (0)
+function self() {
+  export _self="$(basename -- $0 .sh)"
+  export _self_path="$( cd "$( dirname "${BASH_SOURCE[0]}")/" >/dev/null 2>&1 && pwd )"
+}
+function selfDistribution() {
+  echo "Distribution"
+  cat /etc/os-release || cat /usr/lib/os-release
+  echo ""
+}
+### Optional INJECTION of Development Container specific method
+function selfOverride() {
+  _self_override="$( cd "$( dirname "${BASH_SOURCE[0]}")/../../../" >/dev/null 2>&1 && pwd )"
+  _self_override_cmd="$_self_override/$_self"
+  _self_override_home="$HOME/$_self"
+
+  echo ""
+  echo "[$_self] -- Self Override [$_self_override_cmd] "
+  echo "[$_self] -- HOME Override [$_self_override_home] "
+
+  _self_override_hook=$_self_override_cmd
+  [[ -x "$_self_override_home" ]] && _self_override_hook=$_self_override_home
+
+  if [[ -x "$_self_override_hook" ]]; then
+    echo ""
+    echo "[$_self] -- Command =>[$_self] Command-Override Detected =>[$_self_override_hook]"
+    echo ""
+    bash -f $_self_override_hook $status $_self $_self_path $(pwd)
+    status=$?
+  else   
+    echo "[$_self] -- NO Override Detected"
+  fi
+}
+
+### MAIN
+status=0; self; 
+echo "[$_self] -- BEGIN:[$_self_path]"
+
+echo "[$_self] -- DETAILS: BEGIN"
+echo "[$_self] -- $(pwd)"
+
+echo "Environment"
+printenv| sort
+echo ""
+
+echo "System"
+uname --all
+echo ""
+
+selfDistribution
+selfOverride
+
+echo "[$_self] -- DETAILS: END  "
+
+
+
+
+echo "[$_self] -- END  :[$status]"
+echo ""
+
+exit $status

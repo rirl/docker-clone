@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+### Initialize lifecycle method: initializeCommand
+### Used to validate the Development Containers Environmental Setup.
+###
+#### IF the executable initializeCommand is FOUND in the root of the DEVCONTAINER folder, this script will execute it.
+####
+#### It receives the default status, should perform any extended pre-container initialization, and set an appropriate status:
+#### 0 if SUCCESS; otherwise, FAILURE. (and the container processing will NOT be initiated.)
+####
+#### Enables Development Container SPECIFIC initialization to be INJECTED by the consuming Development Container.
+#### See initializeCheck function for additional details.
+####
+###
+### 
+export PLATFORM_OKAY=false; [[ ("$_self_platform"=="darwin"||"$_self_platform"=="darwin" ) ]] && export PLATFORM_OKAY=true
+function self() {
+  export _self="$(basename -- $0 .sh)"
+  export _self_path="$( cd "$( dirname "${BASH_SOURCE[0]}")/" >/dev/null 2>&1 && pwd )"
+}
+function platformCheck() {
+  export _self_platform=$(uname)
+  export PLATFORM_OKAY=FALSE;
+  case $_self_platform in
+     Linux | Darwin)
+       PLATFORM_OKAY=TRUE
+       ;;
+  esac
+  echo "[$_self] -- Platform Check:STATUS=[$PLATFORM_OKAY]"
+}
+function variableCheck() {
+  export VARIABLES_OKAY=FALSE;
+  [[ ! -z "$USER" ]] \
+  && [[ ! -z "$CODE_UID" ]] \
+  && [[ ! -z "$CODE_GID" ]] \
+  && [[ ! -z "$CODE_DOCKER_GID" ]] \
+  && VARIABLES_OKAY=TRUE;
+  echo "[$_self] -- Variable Check:STATUS=[$VARIABLES_OKAY]" 
+}
+function environmentFileCheck() {
+  export ENVFILE_NAME="$HOME/.devcontainer/devcontainer.env"
+  export ENVFILE_OKAY=FALSE;
+  [[ -f "$ENVFILE_NAME" ]] && ENVFILE_OKAY=TRUE
+  echo "[$_self] -- Environment File Check:STATUS=[$ENVFILE_OKAY]...[$ENVFILE_NAME]" 
+}
+### Soft check of Directory mount - Enables resource settings on local system to be available in container.
+### See mounts[] in standard Development Container JSON for details.
+function directoryMountCheck() {
+  export MOUNT_DIRECTORY="$HOME/.devcontainer/home"
+  export MOUNT_DIRECTORY_OKAY=FALSE
+  [[ -d "${MOUNT_DIRECTORY}" ]] &&  MOUNT_DIRECTORY_OKAY="TRUE"
+  echo "[$_self] -- Mount Directory  Check:STATUS=[$MOUNT_DIRECTORY_OKAY]...[$MOUNT_DIRECTORY]" 
+}
+### Optional INJECTION of Development Container specific initialization.
+function initializeCheck() {
+  _self_init="$( cd "$( dirname "${BASH_SOURCE[0]}")/../../../" >/dev/null 2>&1 && pwd )"
+  _self_init_cmd="$_self_init/initializeCommand"
+
+  #echo ""
+  #echo "[$_self] -- Initialize Command-Override Check      =>[$_self_init_cmd]"
+
+  if [[ -x "$_self_init_cmd" ]]; then
+  echo ""
+    echo "[$_self] -- Initialize Command-Override Detected =>[$_self_init_cmd]"
+    echo ""
+    bash -f $_self_init_cmd $status
+    status=$?
+  fi
+}
+#
+# @todo - This should be cleaned up to use && chain... but I have a bug I don't see yet!
+#   [[ $PLATFORM_OKAY == "TRUE" ]] && [[ $VARIABLES_OKAY == "TRUE" ]] &&  [[ $ENVFILE_OKAY == "TRUE" ]] && status=0
+#
+function finalCheck() {
+  if [[ $PLATFORM_OKAY == "TRUE" ]]; then
+    if [[ $VARIABLES_OKAY == "TRUE" ]]; then
+      if [[ $ENVFILE_OKAY == "TRUE" ]]; then
+        status=0
+      fi
+    fi
+  fi
+}
+### MAIN
+status=1; self; 
+echo "[$_self] -- BEGIN:[$_self_path]"
+
+platformCheck; variableCheck; environmentFileCheck; directoryMountCheck
+
+echo ""
+echo "[$_self] -- CHECK: STATUS=[$PLATFORM_OKAY] => PLATFORM=[$_self_platform]"
+echo "[$_self] -- CHECK: STATUS=[$VARIABLES_OKAY] => USER=[$USER]"
+echo "[$_self] -- CHECK: STATUS=[$VARIABLES_OKAY] => UID =[$CODE_UID]"
+echo "[$_self] -- CHECK: STATUS=[$VARIABLES_OKAY] => GID =[$CODE_GID]"
+echo "[$_self] -- CHECK: STATUS=[$VARIABLES_OKAY] => DOCKER GID =[$CODE_DOCKER_GID]"
+echo "[$_self] -- CHECK: STATUS=[$ENVFILE_OKAY] => FILE =[$ENVFILE_NAME]"
+
+finalCheck; initializeCheck
+
+echo "[$_self] -- END  :[$status]"
+echo ""
+
+exit $status

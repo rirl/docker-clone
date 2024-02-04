@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Duplicate boiler plating during initial Development 
+function duplicate() {
+    cp -v bareCommand $1
+}
+duplicate onCreateCommand
+duplicate postAttachCommand
+duplicate postCreateCommand
+duplicate postStartCommand
+duplicate updateContentCommand

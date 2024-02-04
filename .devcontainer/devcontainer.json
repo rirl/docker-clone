@@ -1,0 +1,30 @@
+{
+	"name": "GO1.21.6 Alpine 3:19",
+	"initializeCommand": ".devcontainer/library/standard/lifecycle/initializeCommand",
+	"onCreateCommand": ".devcontainer/library/standard/lifecycle/onCreateCommand",
+	"updateContentCommand": ".devcontainer/library/standard/lifecycle/updateContentCommand",
+	"postCreateCommand": ".devcontainer/library/standard/lifecycle/postCreateCommand",
+	"postStartCommand": ".devcontainer/library/standard/lifecycle/postStartCommand",
+	"postAttachCommand": ".devcontainer/library/standard/lifecycle/postAttachCommand",
+	"mounts": [ 
+		       "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+		       "source=${env:HOME}/.devcontainer/home,target=/home/${env:USER},type=bind"
+              ],
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": { 
+				  "REGISTRY":"registry.hub.docker.com",
+			      "IMAGE": "library",
+			      "VARIANT": "golang:alpine3.19",    
+				  "USERNAME":"${env:USER}",
+				  "USER_UID":"${env:CODE_UID}",
+				  "USER_GID":"${env:CODE_GID}",
+				  "DOCKER_GID":"${env:CODE_DOCKER_GID}"
+				}
+	},
+	"remoteUser":"${env:USER}",
+	"runArgs": [
+		"--env", "USER=${env:USER}",
+		"--env-file","${env:HOME}/.devcontainer/devcontainer.env"
+	]
+}
