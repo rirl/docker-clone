@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+alias docker-login=".devcontainer/library/standard/authenticators/docker/login-all"
+function node_builder() {
+   set -x
+   .devcontainer/library/standard/builders/docker/npm/builder $@
+   set +x
+}

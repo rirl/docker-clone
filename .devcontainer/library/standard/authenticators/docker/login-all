@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+### 
+### Login to Artifactory and GitDock Docker Registries using the variables set in the environment file.
+function self() {
+  export _self="$(basename -- $0 .sh)"
+  export _self_path="$( cd "$( dirname "${BASH_SOURCE[0]}")/" >/dev/null 2>&1 && pwd )"
+}
+status=1; login_artifinity=1; login_gitdock=1; self
+echo "[$_self] --  Command: BEGIN:[$_self_path]"
+
+echo ${ARTIFACTORY_API_KEY}| docker login  ${ARTIFACTORY_URL} --username=${ARTIFACTORY_USER} --password-stdin && login_artifinity=0
+echo ${GITDOCK_API_KEY}    | docker login  ${GITDOCK_URL}     --username=${GITDOCK_USER}     --password-stdin && login_gitdock=0
+
+[[ ($login_artifactory -eq 0) && ($login_gitdock -eq 0 ) ]] && status=0
+
+echo "[$_self] --  Command: END  :[$status]"
+exit $status
+
